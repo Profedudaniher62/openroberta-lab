@@ -2,10 +2,10 @@ services:
   - docker
 
 before_install:
-  - docker pull openroberta/it:15
+  - docker pull openroberta/it-x64:16
 
 script:
-  - docker run --name openroberta --entrypoint "/opt/runIT.sh" openroberta/it:15 ${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} 3.9.3
+  - docker run --name openroberta --entrypoint "/opt/runIT.sh" openroberta/it-x64:16 ${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH} 3.9.3
 
 after_success:
   - docker commit openroberta openroberta-built
