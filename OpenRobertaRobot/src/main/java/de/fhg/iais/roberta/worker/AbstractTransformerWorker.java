@@ -85,7 +85,9 @@ public abstract class AbstractTransformerWorker implements IWorker {
             confBuilder.setRobotType(project.getConfigurationAst().getRobotType());
             confBuilder.setDescription(project.getConfigurationAst().getDescription());
             confBuilder.addComponents(usedHardwareBeanBuilder.build().getUsedConfigurationComponents());
-            confBuilder.addComponents(project.getConfigurationAst().getConfigurationComponentsValues()); // add the components from the default configuration
+            // add the components from the default configuration
+            // TODO this should be checked, as theoretically a default configuration for each version should be necessary
+            confBuilder.addComponents(project.getConfigurationAst().getConfigurationComponentsValues());
             project.setConfigurationAst(confBuilder.build());
         }
     }

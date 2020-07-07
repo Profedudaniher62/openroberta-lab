@@ -1,5 +1,7 @@
-<block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="edison" xmlversion="3.0" description="" tags="">
+<block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="edison" xmlversion="4.0" description="" tags="">
     <instance x="213" y="213">
-        <block type="robBrick_Edison-Brick" id="1" intask="true" deletable="false"></block>
+        <block type="robConf_key" id="1">
+            <field name="NAME">K</field>
+        </block>
     </instance>
 </block_set>

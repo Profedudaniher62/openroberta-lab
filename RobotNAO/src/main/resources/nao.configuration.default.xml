@@ -1,10 +1,7 @@
-<block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="nao" xmlversion="3.0">
-    <instance x="138" y="88">
-        <block id="1" type='naoBrick_NAO-Brick'>
-            <field name='IP_ADDRESS'>0.0.0.0</field>
-            <field name='PORT'>22</field>
-            <field name='USERNAME'>nao</field>
-            <field name='PASSWORD'>nao</field>
+<block_set xmlns="http://de.fhg.iais.roberta.blockly" robottype="nao" xmlversion="4.0">
+    <instance x="213" y="213">
+        <block type="robConf_key" id="1">
+            <field name="NAME">K</field>
         </block>
     </instance>
 </block_set>
