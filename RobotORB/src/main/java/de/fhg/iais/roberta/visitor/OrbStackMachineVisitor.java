@@ -6,25 +6,32 @@ import org.json.JSONObject;
 
 import de.fhg.iais.roberta.components.ConfigurationAst;
 import de.fhg.iais.roberta.components.ConfigurationComponent;
+import de.fhg.iais.roberta.inter.mode.action.IDriveDirection;
 import de.fhg.iais.roberta.inter.mode.action.ILanguage;
+import de.fhg.iais.roberta.inter.mode.action.ITurnDirection;
+import de.fhg.iais.roberta.mode.action.DriveDirection;
 import de.fhg.iais.roberta.syntax.MotorDuration;
 import de.fhg.iais.roberta.syntax.Phrase;
+import de.fhg.iais.roberta.syntax.SC;
 import de.fhg.iais.roberta.syntax.action.display.ClearDisplayAction;
 import de.fhg.iais.roberta.syntax.action.display.ShowTextAction;
-import de.fhg.iais.roberta.syntax.action.light.LightAction;
-import de.fhg.iais.roberta.syntax.action.light.LightStatusAction;
+import de.fhg.iais.roberta.syntax.action.motor.MotorGetPowerAction;
 import de.fhg.iais.roberta.syntax.action.motor.MotorOnAction;
+import de.fhg.iais.roberta.syntax.action.motor.MotorSetPowerAction;
 import de.fhg.iais.roberta.syntax.action.motor.MotorStopAction;
+import de.fhg.iais.roberta.syntax.action.motor.differential.CurveAction;
 import de.fhg.iais.roberta.syntax.action.motor.differential.DriveAction;
-import de.fhg.iais.roberta.syntax.action.sound.PlayNoteAction;
-import de.fhg.iais.roberta.syntax.action.sound.ToneAction;
+import de.fhg.iais.roberta.syntax.action.motor.differential.TurnAction;
 import de.fhg.iais.roberta.syntax.lang.stmt.AssertStmt;
 import de.fhg.iais.roberta.syntax.lang.stmt.DebugAction;
+import de.fhg.iais.roberta.syntax.sensor.generic.ColorSensor;
+import de.fhg.iais.roberta.syntax.sensor.generic.CompassSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.GetSampleSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.GyroSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.InfraredSensor;
-import de.fhg.iais.roberta.syntax.sensor.generic.KeysSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.TimerSensor;
+import de.fhg.iais.roberta.syntax.sensor.generic.TouchSensor;
+import de.fhg.iais.roberta.syntax.sensor.generic.UltrasonicSensor;
 import de.fhg.iais.roberta.util.dbc.Assert;
 import de.fhg.iais.roberta.util.dbc.DbcException;
 import de.fhg.iais.roberta.visitor.lang.codegen.AbstractStackMachineVisitor;
@@ -38,41 +45,61 @@ public class OrbStackMachineVisitor<V> extends AbstractStackMachineVisitor<V> im
     }
 
     @Override
-    public V visitLightAction(LightAction<V> lightAction) {
-        ConfigurationComponent confLedBlock = getConfigurationComponent(lightAction.getPort());
-        String brickName = confLedBlock.getProperty("VAR");
-        if ( brickName != null ) {
-            lightAction.getRgbLedColor().accept(this);
-            JSONObject o = mk(C.LED_ON_ACTION).put(C.NAME, brickName);
-            return app(o);
-        } else {
-            throw new DbcException("No robot name or no port!");
-        }
+    public V visitMotorGetPowerAction(MotorGetPowerAction<V> motorGetPowerAction) {
+        //String port = motorGetPowerAction.getUserDefinedPort();
+        ConfigurationComponent confMotorBlock = getConfigurationComponent(motorGetPowerAction.getUserDefinedPort());
+        String port = confMotorBlock.getProperty("CONNECTOR");
+        JSONObject o = mk(C.MOTOR_GET_POWER).put(C.PORT, port.toLowerCase());
+        return app(o);
     }
 
     @Override
-    public V visitLightStatusAction(LightStatusAction<V> lightStatusAction) {
-        ConfigurationComponent confLedBlock = getConfigurationComponent(lightStatusAction.getPort());
-        String brickName = confLedBlock.getProperty("VAR");
-        if ( brickName != null ) {
-            // for wedo this block is only for setting off the led, so no test for status required lightStatusAction.getStatus()
-
-            JSONObject o = mk(C.STATUS_LIGHT_ACTION).put(C.NAME, brickName);
-            return app(o);
-        } else {
-            throw new DbcException("No robot name or no port!");
-        }
-    }
-
-    @Override
+    /*
+     *     @Override
     public V visitDriveAction(DriveAction<V> driveAction) {
-        return null;
+        driveAction.getParam().getSpeed().accept(this);
+        boolean speedOnly = !processOptionalDuration(driveAction.getParam().getDuration());
+        ConfigurationComponent leftMotor = this.configuration.getFirstMotor(SC.LEFT);
+        //IDriveDirection leftMotorRotationDirection = DriveDirection.get(leftMotor.getProperty(SC.MOTOR_REVERSE));
+        IDriveDirection leftMotorRotationDirection = DriveDirection.FOREWARD;
+        DriveDirection driveDirection = (DriveDirection) driveAction.getDirection();
+        if ( leftMotorRotationDirection != DriveDirection.FOREWARD ) {
+            driveDirection = getDriveDirection(driveAction.getDirection() == DriveDirection.FOREWARD);
+        }
+        JSONObject o = mk(C.DRIVE_ACTION).put(C.DRIVE_DIRECTION, driveDirection).put(C.NAME, "orb").put(C.SPEED_ONLY, speedOnly);
+        if ( speedOnly ) {
+            return app(o);
+        } else {
+            app(o);
+            return app(mk(C.STOP_DRIVE).put(C.NAME, "orb"));
+        }
+    }
+     */
+    public V visitDriveAction(DriveAction<V> driveAction) {
+        driveAction.getParam().getSpeed().accept(this);
+        boolean speedOnly = !processOptionalDuration(driveAction.getParam().getDuration());
+        ConfigurationComponent leftMotor = this.configuration.getFirstMotor(SC.LEFT);
+        String brickName = "orb";
+        //IDriveDirection leftMotorRotationDirection = DriveDirection.get(leftMotor.getProperty(SC.MOTOR_REVERSE));
+        IDriveDirection leftMotorRotationDirection = DriveDirection.FOREWARD;
+        DriveDirection driveDirection = (DriveDirection) driveAction.getDirection();
+        if ( leftMotorRotationDirection != DriveDirection.FOREWARD ) {
+            driveDirection = getDriveDirection(driveAction.getDirection() == DriveDirection.FOREWARD);
+        }
+        JSONObject o = mk(C.DRIVE_ACTION).put(C.DRIVE_DIRECTION, driveDirection).put(C.NAME, brickName).put(C.SPEED_ONLY, speedOnly);
+        if ( speedOnly ) {
+            return app(o);
+        } else {
+            app(o);
+            return app(mk(C.STOP_DRIVE).put(C.NAME, brickName));
+        }
     }
 
     @Override
     public V visitMotorOnAction(MotorOnAction<V> motorOnAction) {
         ConfigurationComponent confMotorBlock = getConfigurationComponent(motorOnAction.getUserDefinedPort());
-        String brickName = confMotorBlock.getProperty("VAR");
+        //String brickName = confMotorBlock.getProperty("VAR");
+        String brickName = "orb";
         String port = confMotorBlock.getProperty("CONNECTOR");
         if ( brickName != null && port != null ) {
             motorOnAction.getParam().getSpeed().accept(this);
@@ -91,6 +118,16 @@ public class OrbStackMachineVisitor<V> extends AbstractStackMachineVisitor<V> im
     }
 
     @Override
+    public V visitMotorSetPowerAction(MotorSetPowerAction<V> motorSetPowerAction) {
+        //String port = motorSetPowerAction.getUserDefinedPort();
+        ConfigurationComponent confMotorBlock = getConfigurationComponent(motorSetPowerAction.getUserDefinedPort());
+        String port = confMotorBlock.getProperty("CONNECTOR");
+        motorSetPowerAction.getPower().accept(this);
+        JSONObject o = mk(C.MOTOR_SET_POWER).put(C.PORT, port.toLowerCase());
+        return app(o);
+    }
+
+    @Override
     public V visitMotorStopAction(MotorStopAction<V> motorStopAction) {
         ConfigurationComponent confMotorBlock = getConfigurationComponent(motorStopAction.getUserDefinedPort());
         String brickName = confMotorBlock.getProperty("VAR");
@@ -100,6 +137,47 @@ public class OrbStackMachineVisitor<V> extends AbstractStackMachineVisitor<V> im
             return app(o);
         } else {
             throw new DbcException("No robot name or no port");
+        }
+    }
+
+    @Override
+    public V visitTurnAction(TurnAction<V> turnAction) {
+        turnAction.getParam().getSpeed().accept(this);
+        boolean speedOnly = !processOptionalDuration(turnAction.getParam().getDuration());
+        //ConfigurationComponent leftMotor = this.configuration.getFirstMotor(SC.LEFT);
+        //IDriveDirection leftMotorRotationDirection = DriveDirection.get(leftMotor.getProperty(SC.MOTOR_REVERSE));
+        ITurnDirection turnDirection = turnAction.getDirection();
+        /*
+        if ( leftMotorRotationDirection != DriveDirection.FOREWARD ) {
+            turnDirection = getTurnDirection(turnAction.getDirection() == TurnDirection.LEFT);
+        }*/
+        JSONObject o = mk(C.TURN_ACTION).put(C.TURN_DIRECTION, turnDirection.toString().toLowerCase()).put(C.NAME, "orb").put(C.SPEED_ONLY, speedOnly);
+        if ( speedOnly ) {
+            return app(o);
+        } else {
+            app(o);
+            return app(mk(C.STOP_DRIVE).put(C.NAME, "orb"));
+        }
+    }
+
+    @Override
+    public V visitCurveAction(CurveAction<V> curveAction) {
+        curveAction.getParamLeft().getSpeed().accept(this);
+        curveAction.getParamRight().getSpeed().accept(this);
+        boolean speedOnly = !processOptionalDuration(curveAction.getParamLeft().getDuration());
+        //ConfigurationComponent leftMotor = this.configuration.getFirstMotor(SC.LEFT);
+        //IDriveDirection leftMotorRotationDirection = DriveDirection.get(leftMotor.getProperty(SC.MOTOR_REVERSE));
+        DriveDirection driveDirection = (DriveDirection) curveAction.getDirection();
+        /*
+        if ( leftMotorRotationDirection != DriveDirection.FOREWARD ) {
+            driveDirection = getDriveDirection(curveAction.getDirection() == DriveDirection.FOREWARD);
+        }*/
+        JSONObject o = mk(C.CURVE_ACTION).put(C.DRIVE_DIRECTION, driveDirection).put(C.NAME, "orb").put(C.SPEED_ONLY, speedOnly);
+        if ( speedOnly ) {
+            return app(o);
+        } else {
+            app(o);
+            return app(mk(C.STOP_DRIVE).put(C.NAME, "orb"));
         }
     }
 
@@ -117,15 +195,34 @@ public class OrbStackMachineVisitor<V> extends AbstractStackMachineVisitor<V> im
     }
 
     @Override
-    public V visitKeysSensor(KeysSensor<V> keysSensor) {
-        ConfigurationComponent keysSensorBlock = getConfigurationComponent(keysSensor.getPort());
-        String brickName = keysSensorBlock.getProperty("VAR");
-        if ( brickName != null ) {
-            JSONObject o = mk(C.GET_SAMPLE).put(C.GET_SAMPLE, C.BUTTONS).put(C.NAME, brickName);
-            return app(o);
-        } else {
-            throw new DbcException("operation not supported");
-        }
+    public V visitCompassSensor(CompassSensor<V> compassSensor) {
+        // TODO check if this is really supported!
+        String mode = compassSensor.getMode();
+        JSONObject o = mk(C.GET_SAMPLE).put(C.GET_SAMPLE, C.COMPASS).put(C.MODE, mode.toLowerCase()).put(C.NAME, "orb");
+        return app(o);
+    }
+
+    @Override
+    public V visitTouchSensor(TouchSensor<V> touchSensor) {
+        String port = touchSensor.getPort();
+        JSONObject o = mk(C.GET_SAMPLE).put(C.GET_SAMPLE, C.TOUCH).put(C.PORT, port).put(C.NAME, "orb");
+        return app(o);
+    }
+
+    @Override
+    public V visitColorSensor(ColorSensor<V> colorSensor) {
+        String mode = colorSensor.getMode();
+        String port = colorSensor.getPort();
+        JSONObject o = mk(C.GET_SAMPLE).put(C.GET_SAMPLE, C.COLOR).put(C.PORT, port).put(C.MODE, mode.toLowerCase()).put(C.NAME, "orb");
+        return app(o);
+    }
+
+    @Override
+    public V visitUltrasonicSensor(UltrasonicSensor<V> ultrasonicSensor) {
+        String mode = ultrasonicSensor.getMode();
+        String port = ultrasonicSensor.getPort();
+        JSONObject o = mk(C.GET_SAMPLE).put(C.GET_SAMPLE, C.ULTRASONIC).put(C.PORT, port).put(C.MODE, mode.toLowerCase()).put(C.NAME, "orb");//war ev3, hab geändert
+        return app(o);
     }
 
     @Override
@@ -139,49 +236,6 @@ public class OrbStackMachineVisitor<V> extends AbstractStackMachineVisitor<V> im
             return app(o);
         } else {
             throw new DbcException("operation not supported");
-        }
-    }
-
-    @Override
-    public V visitInfraredSensor(InfraredSensor<V> infraredSensor) {
-        ConfigurationComponent confInfraredSensor = getConfigurationComponent(infraredSensor.getPort());
-        String brickName = confInfraredSensor.getProperty("VAR");
-        String port = confInfraredSensor.getProperty("CONNECTOR");
-        if ( brickName != null && port != null ) {
-            JSONObject o = mk(C.GET_SAMPLE).put(C.GET_SAMPLE, C.INFRARED).put(C.NAME, brickName).put(C.PORT, port);
-            return app(o);
-        } else {
-            throw new DbcException("No robot name or no port!");
-        }
-    }
-
-    @Override
-    public V visitPlayNoteAction(PlayNoteAction<V> playNoteAction) {
-        ConfigurationComponent playNoteBlock = getConfigurationComponent(playNoteAction.getPort());
-        String brickName = playNoteBlock.getProperty("VAR");
-        if ( brickName != null ) {
-            JSONObject frequency = mk(C.EXPR).put(C.EXPR, C.NUM_CONST).put(C.VALUE, playNoteAction.getFrequency());
-            app(frequency);
-            JSONObject duration = mk(C.EXPR).put(C.EXPR, C.NUM_CONST).put(C.VALUE, playNoteAction.getDuration());
-            app(duration);
-            JSONObject o = mk(C.TONE_ACTION).put(C.NAME, brickName);
-            return app(o);
-        } else {
-            throw new DbcException("No robot name or no port!");
-        }
-    }
-
-    @Override
-    public V visitToneAction(ToneAction<V> toneAction) {
-        ConfigurationComponent toneBlock = getConfigurationComponent(toneAction.getPort());
-        String brickName = toneBlock.getProperty("VAR");
-        if ( brickName != null ) {
-            toneAction.getFrequency().accept(this);
-            toneAction.getDuration().accept(this);
-            JSONObject o = mk(C.TONE_ACTION).put(C.NAME, brickName);
-            return app(o);
-        } else {
-            throw new DbcException("No robot name or no port!");
         }
     }
 
@@ -200,6 +254,11 @@ public class OrbStackMachineVisitor<V> extends AbstractStackMachineVisitor<V> im
                 throw new DbcException("Invalid Timer Mode " + timerSensor.getMode());
         }
         return app(o);
+    }
+
+    @Override
+    public V visitInfraredSensor(InfraredSensor<V> infraredSensor) {
+        return null;
     }
 
     @Override

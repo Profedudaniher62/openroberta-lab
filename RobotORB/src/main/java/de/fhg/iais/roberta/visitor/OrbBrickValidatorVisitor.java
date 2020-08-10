@@ -9,7 +9,9 @@ import de.fhg.iais.roberta.components.ConfigurationComponent;
 import de.fhg.iais.roberta.components.UsedSensor;
 import de.fhg.iais.roberta.syntax.SC;
 import de.fhg.iais.roberta.syntax.action.motor.MotorOnAction;
+import de.fhg.iais.roberta.syntax.action.motor.differential.CurveAction;
 import de.fhg.iais.roberta.syntax.action.motor.differential.DriveAction;
+import de.fhg.iais.roberta.syntax.action.motor.differential.TurnAction;
 import de.fhg.iais.roberta.syntax.sensor.ExternalSensor;
 import de.fhg.iais.roberta.syntax.sensor.generic.HTColorSensor;
 import de.fhg.iais.roberta.typecheck.NepoInfo;
@@ -23,6 +25,16 @@ public class OrbBrickValidatorVisitor extends AbstractBrickValidatorVisitor impl
 
     @Override
     public Void visitDriveAction(DriveAction<Void> driveAction) {
+        return null;
+    }
+
+    @Override
+    public Void visitCurveAction(CurveAction<Void> curveAction) {
+        return null;
+    }
+
+    @Override
+    public Void visitTurnAction(TurnAction<Void> turnAction) {
         return null;
     }
 

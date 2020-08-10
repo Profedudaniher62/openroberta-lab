@@ -314,16 +314,90 @@ export class RobotOrbBehaviour extends ARobotBehaviour {
         throw new Error( "Method not implemented." );
     }
 
-    public driveAction( _name: string, _direction: string, _speed: number, _distance: number ): number {
-        throw new Error( "Method not implemented." );
+    //Erstmal Port als Eingabe Eingeführt
+    public driveAction( name: string, direction: string, speed: number, distance: number): number {
+         var brickid = this.getBrickIdByName( name );
+         const robotText = 'robot: ' + name + ', direction: ' + direction;
+         const durText = distance === undefined ? ' w.o. duration' : (' for ' + distance + ' msec');
+         U.debug(robotText + ' motor speed ' + speed + durText);
+         // This is to handle negative values entered in the distance parameter in the drive block
+         if ((direction != C.FOREWARD && distance > 0) || (direction == C.FOREWARD && distance < 0) || (direction != C.FOREWARD && !distance)) {
+             speed *= -1;
+         }
+         // This is to handle 0 distance being passed in
+         if (distance === 0) {
+             speed = 0;
+         }
+         const rotationPerSecond = C.MAX_ROTATION * Math.abs(speed) / 100.0;
+         if (rotationPerSecond == 0.0 || distance === undefined) {
+            const cmd = { 'target': 'orb', 'type': 'command', 'actuator': 'motor', 'brickid': brickid, 'action': 'drive', 'direction': speed < 0 ? 1 : 0, 'power': Math.abs( speed ) };
+            this.btInterfaceFct( cmd );
+             return 0;
+         } else {
+             const rotations = Math.abs(distance) / (C.WHEEL_DIAMETER * Math.PI);
+             const distancee = rotations / rotationPerSecond * 1000;
+             const cmd = { 'target': 'orb', 'type': 'command', 'actuator': 'motor', 'brickid': brickid, 'action': 'drivefor', 'direction': speed < 0 ? 1 : 0, 'power': Math.abs( speed ), 'distance': distancee, };
+             this.btInterfaceFct( cmd );
+             return distancee;
+         }
     }
 
-    public curveAction( _name: string, _direction: string, _speedL: number, _speedR: number, _distance: number ): number {
-        throw new Error( "Method not implemented." );
+    public curveAction( name: string, direction: string, speedL: number, speedR: number, distance: number ): number {
+        var brickid = this.getBrickIdByName( name );
+        const robotText = 'robot: ' + name + ', direction: ' + direction;
+		const durText = distance === undefined ? ' w.o. duration' : (' for ' + distance + ' msec');
+		U.debug(robotText + ' left motor speed ' + speedL + ' right motor speed ' + speedR + durText);
+		// This is to handle negative values entered in the distance parameter in the steer block
+		if ((direction != C.FOREWARD && distance > 0) || (direction == C.FOREWARD && distance < 0) || (direction != C.FOREWARD && !distance)) {
+			speedL *= -1;
+			speedR *= -1;
+		}
+		// This is to handle 0 distance being passed in
+		if (distance === 0) {
+			speedR = 0;
+			speedL = 0;
+        }
+		const avgSpeed = 0.5 * (Math.abs(speedL) + Math.abs(speedR))
+		const rotationPerSecond = C.MAX_ROTATION * avgSpeed / 100.0;
+		if (rotationPerSecond == 0.0 || distance === undefined) {
+            const cmd = { 'target': 'orb', 'type': 'command', 'actuator': 'motor', 'brickid': brickid, 'action': 'steer', 'direction': speedL && speedR < 0 ? 1 : 0, 'powerR': Math.abs( speedR ), 'powerL': Math.abs( speedL ) };
+            this.btInterfaceFct( cmd );
+			return 0;
+		} else {
+            const rotations = Math.abs(distance) / (C.WHEEL_DIAMETER * Math.PI);
+            const distancee = rotations / rotationPerSecond * 1000;
+            const cmd = { 'target': 'orb', 'type': 'command', 'actuator': 'motor', 'brickid': brickid, 'action': 'steerfor', 'direction': speedL && speedR < 0 ? 1 : 0, 'powerR': Math.abs( speedR ), 'powerL': Math.abs( speedL ), 'distance': distancee };
+            this.btInterfaceFct( cmd );
+			return distancee;
+		}
     }
 
-    public turnAction( _name: string, _direction: string, _speed: number, _angle: number ): number {
-        throw new Error( "Method not implemented." );
+    public turnAction( name: string, direction: string, speed: number, angle: number ): number {
+        var brickid = this.getBrickIdByName( name );
+        const robotText = 'robot: ' + name + ', direction: ' + direction;
+		const durText = angle === undefined ? ' w.o. duration' : (' for ' + angle + ' msec');
+		U.debug(robotText + ' motor speed ' + speed + durText);
+		// This is to handle negative values entered in the degree parameter in the turn block 
+		if ((direction == C.LEFT && angle < 0) || (direction == C.RIGHT && angle < 0)) {
+			speed *= -1;
+		}
+		// This is to handle an angle of 0 being passed in
+		if (angle === 0) {
+			speed = 0;
+		}
+        const rotationPerSecond = C.MAX_ROTATION * Math.abs(speed) / 100.0;
+        // TODO Right or Left
+		if (rotationPerSecond == 0.0 || angle === undefined) {
+            const cmd = { 'target': 'orb', 'type': 'command', 'actuator': 'motor', 'brickid': brickid, 'action': 'turn', 'direction': speed < 0 ? 1 : 0, 'power': Math.abs( speed ), 'RoL': direction };
+            this.btInterfaceFct( cmd );
+			return 0;
+		} else {
+            const rotations = C.TURN_RATIO * (Math.abs(angle) / 720.);
+            const angel = rotations / rotationPerSecond * 1000;
+            const cmd = { 'target': 'orb', 'type': 'command', 'actuator': 'motor', 'brickid': brickid, 'action': 'turnfor', 'direction': speed < 0 ? 1 : 0, 'power': Math.abs( speed ), 'angel': angel, 'RoL': direction };
+            this.btInterfaceFct( cmd );
+			return angel;
+		}
     }
 
     public showTextActionPosition( _text: any, _x: number, _y: number ): void {

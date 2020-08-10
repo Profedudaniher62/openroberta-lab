@@ -1,26 +1,104 @@
 <toolbox_set id="toolboxExpert" style="display: none">
   <category name="TOOLBOX_ACTION" svg="true">
     <category name="TOOLBOX_MOVE" svg="true">
-      <block type="robActions_motor_on_for">
-        <value name="POWER">
-          <block type="math_number">
-            <field name="NUM">30</field>
-          </block>
-        </value>
-        <value name="VALUE">
-          <block type="math_number">
-            <field name="NUM">1000</field>
-          </block>
-        </value>
-      </block>
-      <block type="robActions_motor_on">
-        <value name="POWER">
-          <block type="math_number">
-            <field name="NUM">30</field>
-          </block>
-        </value>
-      </block>
-      <block type="robActions_motor_stop"/>
+            <block type="robActions_motor_on_for">
+                <value name="POWER">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+                <value name="VALUE">
+                    <block type="math_number">
+                        <field name="NUM">1000</field>
+                    </block>
+                </value>
+            </block>
+            <block type="robActions_motor_on">
+                <value name="POWER">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+            </block>
+            <block type="robActions_motor_getPower"></block>
+            <block type="robActions_motor_setPower">
+                <value name="POWER">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+            </block>
+            <block type="robActions_motor_stop"></block>
+        </category>
+        <category name="TOOLBOX_DRIVE" svg="true">
+            <block type="robActions_motorDiff_on_for">
+                <value name="POWER">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+                <value name="DISTANCE">
+                    <block type="math_number">
+                        <field name="NUM">500</field>
+                    </block>
+                </value>
+            </block>
+            <block type="robActions_motorDiff_on">
+                <value name="POWER">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+            </block>
+            <block type="robActions_motorDiff_stop"></block>
+            <block type="robActions_motorDiff_turn_for">
+                <value name="POWER">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+                <value name="DEGREE">
+                    <block type="math_number">
+                        <field name="NUM">20</field>
+                    </block>
+                </value>
+            </block>
+            <block type="robActions_motorDiff_turn">
+                <value name="POWER">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+            </block>
+            <block type="robActions_motorDiff_curve_for">
+                <value name="POWER_LEFT">
+                    <block type="math_number">
+                        <field name="NUM">10</field>
+                    </block>
+                </value>
+                <value name="POWER_RIGHT">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+                <value name="DISTANCE">
+                    <block type="math_number">
+                        <field name="NUM">20</field>
+                    </block>
+                </value>
+            </block>
+            <block type="robActions_motorDiff_curve">
+                <value name="POWER_LEFT">
+                    <block type="math_number">
+                        <field name="NUM">10</field>
+                    </block>
+                </value>
+                <value name="POWER_RIGHT">
+                    <block type="math_number">
+                        <field name="NUM">30</field>
+                    </block>
+                </value>
+            </block>
     </category>
     <category name="TOOLBOX_DISPLAY" svg="true">
       <block type="robActions_display_text">
@@ -33,35 +111,17 @@
       <block type="robActions_display_clear"/>
     </category>
     <category name="TOOLBOX_SOUND" svg="true">
-      <block type="mbedActions_play_note"/>
-      <block type="robActions_play_tone">
-        <value name="FREQUENCE">
-          <block type="math_number">
-            <field name="NUM">300</field>
-          </block>
-        </value>
-        <value name="DURATION">
-          <block type="math_number">
-            <field name="NUM">100</field>
-          </block>
-        </value>
-      </block>
     </category>
     <category name="TOOLBOX_LIGHT" svg="true">
-      <block type="robActions_led_on">
-        <value name="COLOR">
-          <block type="robColour_picker">
-            <field name="COLOUR">#FF0000</field>
-          </block>
-        </value>
-      </block>
-      <block type="robActions_led_off"/>
     </category>
   </category>
   <category name="TOOLBOX_SENSOR" svg="true">
-    <block type="robSensors_key_getSample"/>
-    <block type="robSensors_gyro_getSample"/>
-    <block type="robSensors_infrared_getSample"/>
+  	<block type="robSensors_ultrasonic_getSample" />
+  	<block type="robSensors_infrared_getSample" />
+  	<block type="robSensors_touch_getSample" />
+  	<block type="robSensors_colour_getSample" />
+  	<block type="robSensors_gyro_getSample" />
+  	<block type="robSensors_compass_getSample" />
     <block type="robSensors_timer_getSample"/>
     <block type="robSensors_timer_reset"/>
   </category>
