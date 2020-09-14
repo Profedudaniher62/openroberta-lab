@@ -342,14 +342,14 @@ define([ 'exports', 'log', 'util', 'comm', 'message', 'guiState.controller', 'bl
     }
     exports.reloadView = reloadView;
 
-    function changeArduinoRobot(){
+    function changeRobotSvg(){
         bricklyWorkspace.setDevice({
             group : GUISTATE_C.getRobotGroup(),
             robot : GUISTATE_C.getRobot()
         });
         confVis.resetRobot();
     }
-    exports.changeArduinoRobot = changeArduinoRobot;
+    exports.changeRobotSvg = changeRobotSvg;
 
     function resetView() {
         if(confVis){
@@ -377,7 +377,7 @@ define([ 'exports', 'log', 'util', 'comm', 'message', 'guiState.controller', 'bl
         bricklyWorkspace.clear();
         Blockly.svgResize(bricklyWorkspace);
         var dom = Blockly.Xml.textToDom(xml, bricklyWorkspace);
-        if(bricklyWorkspace.device === 'arduino'){
+        if(bricklyWorkspace.device === 'arduino' || bricklyWorkspace.device === 'microbit'){
             confVis = CircuitVisualization.domToWorkspace(dom, bricklyWorkspace);
         } else {
             Blockly.Xml.domToWorkspace(dom, bricklyWorkspace);

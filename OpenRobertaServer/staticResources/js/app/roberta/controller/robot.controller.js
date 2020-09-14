@@ -333,9 +333,10 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.controller', 'guiState.m
                         GUISTATE_C.setRobot(robot, result);
                         CONFIGURATION_C.resetView();
                         PROGRAM_C.resetView();
+                        if(robot === 'microbit') CONFIGURATION_C.changeRobotSvg();
                     } else {
                         GUISTATE_C.setRobot(robot, result);
-                        if(GUISTATE_C.findGroup(robot) === 'arduino') CONFIGURATION_C.changeArduinoRobot();
+                        if(GUISTATE_C.findGroup(robot) === 'arduino') CONFIGURATION_C.changeRobotSvg();
                     }
                     if (GUISTATE_C.getView() == 'tabConfList') {
                         $('#confList>.bootstrap-table').find('button[name="refresh"]').trigger('click');
