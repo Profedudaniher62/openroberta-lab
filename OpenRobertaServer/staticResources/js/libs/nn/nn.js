@@ -6,13 +6,12 @@
 define(["require", "exports"], function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.getOutputNode = exports.forEachNode = exports.updateWeights = exports.backProp = exports.forwardProp = exports.buildNetwork = exports.Link = exports.RegularizationFunction = exports.Activations = exports.Errors = exports.Node = void 0;
     /**
      * A node in a neural network. Each node has a state
      * (total input, output, and their respectively derivatives) which changes
      * after every forward and back propagation run.
      */
-    var Node = /** @class */ (function () {
+    var Node = (function () {
         /**
          * Creates a new node with the provided id and activation function.
          */
@@ -58,7 +57,7 @@ define(["require", "exports"], function (require, exports) {
     }());
     exports.Node = Node;
     /** Built-in error functions */
-    var Errors = /** @class */ (function () {
+    var Errors = (function () {
         function Errors() {
         }
         Errors.SQUARE = {
@@ -84,7 +83,7 @@ define(["require", "exports"], function (require, exports) {
         }
     };
     /** Built-in activation functions */
-    var Activations = /** @class */ (function () {
+    var Activations = (function () {
         function Activations() {
         }
         Activations.TANH = {
@@ -113,7 +112,7 @@ define(["require", "exports"], function (require, exports) {
     }());
     exports.Activations = Activations;
     /** Build-in regularization functions */
-    var RegularizationFunction = /** @class */ (function () {
+    var RegularizationFunction = (function () {
         function RegularizationFunction() {
         }
         RegularizationFunction.L1 = {
@@ -133,7 +132,7 @@ define(["require", "exports"], function (require, exports) {
      * with respect to a particular input) which gets updated after
      * a run of back propagation.
      */
-    var Link = /** @class */ (function () {
+    var Link = (function () {
         /**
          * Constructs a link in the neural network initialized with random weight.
          *
@@ -143,7 +142,7 @@ define(["require", "exports"], function (require, exports) {
          *     penalty for this weight. If null, there will be no regularization.
          */
         function Link(source, dest, regularization, initZero) {
-            this.weight = Math.random() - 0.5;
+            this.weight = 0.0; // was: Math.random() - 0.5;
             this.isDead = false;
             /** Error derivative with respect to this weight. */
             this.errorDer = 0;

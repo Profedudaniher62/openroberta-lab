@@ -6,7 +6,6 @@
 define(["require", "exports", "./nn"], function (require, exports, nn) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.State = exports.Type = exports.getKeyFromValue = exports.regularizations = exports.activations = void 0;
     /** Suffix added to the state when storing if a control is hidden or not. */
     var HIDE_STATE_SUFFIX = "_hide";
     /** A map between names and activation functions. */
@@ -58,7 +57,7 @@ define(["require", "exports", "./nn"], function (require, exports, nn) {
     })(Type = exports.Type || (exports.Type = {}));
     ;
     // Add the GUI state.
-    var State = /** @class */ (function () {
+    var State = (function () {
         function State() {
             this.learningRate = 0.03;
             this.regularizationRate = 0;

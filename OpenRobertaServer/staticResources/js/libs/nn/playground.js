@@ -6,53 +6,52 @@
 define(["require", "exports", "./nn", "./state", "d3"], function (require, exports, nn, state_1, d3) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.runPlayground = void 0;
+    var mainWidth;
+    var RECT_SIZE = 30;
+    var BIAS_SIZE = 5;
+    var NUM_SAMPLES_CLASSIFY = 500;
+    var DENSITY = 100;
+    var HoverType;
+    (function (HoverType) {
+        HoverType[HoverType["BIAS"] = 0] = "BIAS";
+        HoverType[HoverType["WEIGHT"] = 1] = "WEIGHT";
+    })(HoverType || (HoverType = {}));
+    var INPUTS = {
+        "i1": { f: function (label) { return 0.0; }, label: "I_1" },
+        "i2": { f: function (label) { return 4.0; }, label: "I_2" },
+        "i3": { f: function (label) { return 6.0; }, label: "I_3" },
+    };
+    var HIDABLE_CONTROLS = [
+        ["Show test data", "showTestData"],
+        ["Discretize output", "discretize"],
+        ["Play button", "playButton"],
+        ["Step button", "stepButton"],
+        ["Reset button", "resetButton"],
+        ["Learning rate", "learningRate"],
+        ["Activation", "activation"],
+        ["Regularization", "regularization"],
+        ["Regularization rate", "regularizationRate"],
+        ["Problem type", "problem"],
+        ["Which dataset", "dataset"],
+        ["Ratio train data", "percTrainData"],
+        ["Noise level", "noise"],
+        ["Batch size", "batchSize"],
+        ["# of hidden layers", "numHiddenLayers"],
+    ];
+    var state = new state_1.State();
+    var iter = 0;
+    var linkWidthScale = d3.scale.linear()
+        .domain([0, 5])
+        .range([1, 10])
+        .clamp(true);
+    var colorScale = d3.scale.linear()
+        .domain([-1, 0, 1])
+        .range(["#f59322", "#e8eaeb", "#0877bd"])
+        .clamp(true);
+    var boundary = {};
+    var selectedNodeId = null;
+    var network = null;
     function runPlayground() {
-        var mainWidth;
-        var RECT_SIZE = 30;
-        var BIAS_SIZE = 5;
-        var NUM_SAMPLES_CLASSIFY = 500;
-        var DENSITY = 100;
-        var HoverType;
-        (function (HoverType) {
-            HoverType[HoverType["BIAS"] = 0] = "BIAS";
-            HoverType[HoverType["WEIGHT"] = 1] = "WEIGHT";
-        })(HoverType || (HoverType = {}));
-        var INPUTS = {
-            "i1": { f: function (label) { return 0.0; }, label: "I_1" },
-            "i2": { f: function (label) { return 4.0; }, label: "I_2" },
-            "i3": { f: function (label) { return 6.0; }, label: "I_3" },
-        };
-        var HIDABLE_CONTROLS = [
-            ["Show test data", "showTestData"],
-            ["Discretize output", "discretize"],
-            ["Play button", "playButton"],
-            ["Step button", "stepButton"],
-            ["Reset button", "resetButton"],
-            ["Learning rate", "learningRate"],
-            ["Activation", "activation"],
-            ["Regularization", "regularization"],
-            ["Regularization rate", "regularizationRate"],
-            ["Problem type", "problem"],
-            ["Which dataset", "dataset"],
-            ["Ratio train data", "percTrainData"],
-            ["Noise level", "noise"],
-            ["Batch size", "batchSize"],
-            ["# of hidden layers", "numHiddenLayers"],
-        ];
-        var state = new state_1.State();
-        var iter = 0;
-        var linkWidthScale = d3.scale.linear()
-            .domain([0, 5])
-            .range([1, 10])
-            .clamp(true);
-        var colorScale = d3.scale.linear()
-            .domain([-1, 0, 1])
-            .range(["#f59322", "#e8eaeb", "#0877bd"])
-            .clamp(true);
-        var boundary = {};
-        var selectedNodeId = null;
-        var network = null;
         function makeGUI() {
             d3.select("#next-step-button").on("click", function () {
                 if (iter === 0) {
