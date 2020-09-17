@@ -16,30 +16,18 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
         HoverType[HoverType["BIAS"] = 0] = "BIAS";
         HoverType[HoverType["WEIGHT"] = 1] = "WEIGHT";
     })(HoverType || (HoverType = {}));
+    var NodeType;
+    (function (NodeType) {
+        NodeType[NodeType["INPUT"] = 0] = "INPUT";
+        NodeType[NodeType["HIDDEN"] = 1] = "HIDDEN";
+        NodeType[NodeType["OUTPUT"] = 2] = "OUTPUT";
+    })(NodeType || (NodeType = {}));
     var INPUTS = {
-        "i1": { f: function (label) { return 0.0; }, label: "I_1" },
-        "i2": { f: function (label) { return 4.0; }, label: "I_2" },
-        "i3": { f: function (label) { return 6.0; }, label: "I_3" },
+        "i1": "I_1",
+        "i2": "I_2",
+        "i3": "I_3",
     };
-    var HIDABLE_CONTROLS = [
-        ["Show test data", "showTestData"],
-        ["Discretize output", "discretize"],
-        ["Play button", "playButton"],
-        ["Step button", "stepButton"],
-        ["Reset button", "resetButton"],
-        ["Learning rate", "learningRate"],
-        ["Activation", "activation"],
-        ["Regularization", "regularization"],
-        ["Regularization rate", "regularizationRate"],
-        ["Problem type", "problem"],
-        ["Which dataset", "dataset"],
-        ["Ratio train data", "percTrainData"],
-        ["Noise level", "noise"],
-        ["Batch size", "batchSize"],
-        ["# of hidden layers", "numHiddenLayers"],
-    ];
     var state = new state_1.State();
-    var iter = 0;
     var linkWidthScale = d3.scale.linear()
         .domain([0, 5])
         .range([1, 10])
@@ -49,16 +37,9 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
         .range(["#f59322", "#e8eaeb", "#0877bd"])
         .clamp(true);
     var boundary = {};
-    var selectedNodeId = null;
     var network = null;
     function runPlayground() {
         function makeGUI() {
-            d3.select("#next-step-button").on("click", function () {
-                if (iter === 0) {
-                    simulationStarted();
-                }
-                oneStep();
-            });
             d3.select("#add-layers").on("click", function () {
                 if (state.numHiddenLayers >= 6) {
                     return;
@@ -109,7 +90,7 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
                         var link = node.inputLinks[j];
                         container.select("#link" + link.source.id + "-" + link.dest.id)
                             .style({
-                            "stroke-dashoffset": -iter / 3,
+                            "stroke-dashoffset": 0,
                             "stroke-width": linkWidthScale(Math.abs(link.weight)),
                             "stroke": colorScale(link.weight)
                         })
@@ -118,12 +99,13 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
                 }
             }
         }
-        function drawNode(cx, cy, nodeId, isInput, container, node) {
+        function drawNode(cx, cy, nodeId, nodeType, container, node) {
             var x = cx - RECT_SIZE / 2;
             var y = cy - RECT_SIZE / 2;
+            var nodeClass = nodeType === NodeType.INPUT ? "node_input" : nodeType === NodeType.HIDDEN ? "node_hidden" : "node_output";
             var nodeGroup = container.append("g")
                 .attr({
-                "class": "node",
+                "class": nodeClass,
                 "id": "node" + nodeId,
                 "transform": "translate(" + x + "," + y + ")"
             });
@@ -136,9 +118,9 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
                 height: RECT_SIZE,
             });
             var activeOrNotClass = state[nodeId] ? "active" : "inactive";
-            if (isInput) {
-                var label = INPUTS[nodeId].label != null ?
-                    INPUTS[nodeId].label : nodeId;
+            if (nodeType === NodeType.INPUT) {
+                var label = INPUTS[nodeId] != null ?
+                    INPUTS[nodeId] : nodeId;
                 // Draw the input label.
                 var text = nodeGroup.append("text").attr({
                     class: "main-label",
@@ -171,7 +153,7 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
                 }
                 nodeGroup.classed(activeOrNotClass, true);
             }
-            if (!isInput) {
+            if (nodeType !== NodeType.INPUT) {
                 // Draw the node's bias.
                 nodeGroup.append("rect")
                     .attr({
@@ -196,26 +178,8 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
                 position: "absolute",
                 left: x + 3 + "px",
                 top: y + 3 + "px"
-            })
-                .on("mouseenter", function () {
-                selectedNodeId = nodeId;
-                div.classed("hovered", true);
-                nodeGroup.classed("hovered", true);
-            })
-                .on("mouseleave", function () {
-                selectedNodeId = null;
-                div.classed("hovered", false);
-                nodeGroup.classed("hovered", false);
             });
-            if (isInput) {
-                div.on("click", function () {
-                    state[nodeId] = !state[nodeId];
-                    parametersChanged = true;
-                    reset();
-                });
-                div.style("cursor", "pointer");
-            }
-            if (isInput) {
+            if (nodeType === NodeType.INPUT) {
                 div.classed(activeOrNotClass, true);
             }
         }
@@ -256,7 +220,7 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
             nodeIds.forEach(function (nodeId, i) {
                 var cy = nodeIndexScale(i) + RECT_SIZE / 2;
                 node2coord[nodeId] = { cx: cx, cy: cy };
-                drawNode(cx, cy, nodeId, true, container);
+                drawNode(cx, cy, nodeId, NodeType.INPUT, container);
             });
             // Draw the intermediate layers.
             for (var layerIdx = 1; layerIdx < numLayers - 1; layerIdx++) {
@@ -268,7 +232,7 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
                     var node = network[layerIdx][i];
                     var cy = nodeIndexScale(i) + RECT_SIZE / 2;
                     node2coord[node.id] = { cx: cx_1, cy: cy };
-                    drawNode(cx_1, cy, node.id, false, container, node);
+                    drawNode(cx_1, cy, node.id, NodeType.HIDDEN, container, node);
                     // Show callout to thumbnails.
                     var numNodes_1 = network[layerIdx].length;
                     var nextNumNodes = network[layerIdx + 1].length;
@@ -316,7 +280,7 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
                     var node = outputLayer[j];
                     var cy = nodeIndexScale(j) + RECT_SIZE / 2;
                     node2coord[node.id] = { cx: cx_2, cy: cy };
-                    drawNode(cx_2, cy, node.id, false, container, node);
+                    drawNode(cx_2, cy, node.id, NodeType.OUTPUT, container, node);
                     // Draw links.
                     for (var i = 0; i < node.inputLinks.length; i++) {
                         var link = node.inputLinks[i];
@@ -474,23 +438,12 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
             }
             return result;
         }
-        function oneStep() {
-            iter++;
-            nn.forwardProp(network, [0.0, iter + 0.0, iter + 5.0]);
-            var outputs = network[network.length - 1];
-            for (var j = 0; j < outputs.length; j++) {
-                var node = outputs[j];
-                console.log(node.output);
-            }
-            updateUI();
-        }
         function reset(onStartup) {
             if (onStartup === void 0) { onStartup = false; }
             var suffix = state.numHiddenLayers !== 1 ? "s" : "";
             d3.select("#layers-label").text("Hidden layer" + suffix);
             d3.select("#num-layers").text(state.numHiddenLayers);
             // Make a simple network.
-            iter = 0;
             var numInputs = 3;
             var shape = [numInputs].concat(state.networkShape).concat([3]);
             var outputActivation = nn.Activations.LINEAR; // was: TANH;
@@ -499,50 +452,23 @@ define(["require", "exports", "./nn", "./state", "d3"], function (require, expor
             updateUI(true);
         }
         ;
-        function hideControls() {
-            // Set display:none to all the UI elements that are hidden.
-            var hiddenProps = []; // TODO: state.getHiddenProps();
-            hiddenProps.forEach(function (prop) {
-                var controls = d3.selectAll(".ui-" + prop);
-                if (controls.size() === 0) {
-                    console.warn("0 html elements found with class .ui-" + prop);
-                }
-                controls.style("display", "none");
-            });
-            // Also add checkbox for each hidable control in the "use it in classrom"
-            // section.
-            var hideControls = d3.select(".hide-controls");
-            HIDABLE_CONTROLS.forEach(function (_a) {
-                var text = _a[0], id = _a[1];
-                var label = hideControls.append("label")
-                    .attr("class", "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect");
-                var input = label.append("input")
-                    .attr({
-                    type: "checkbox",
-                    class: "mdl-checkbox__input",
-                });
-                if (hiddenProps.indexOf(id) === -1) {
-                    input.attr("checked", "true");
-                }
-                input.on("change", function () {
-                    state.setHideProperty(id, !this.checked);
-                    d3.select(".hide-controls-link")
-                        .attr("href", window.location.href);
-                });
-                label.append("span")
-                    .attr("class", "mdl-checkbox__label label")
-                    .text(text);
-            });
-            d3.select(".hide-controls-link")
-                .attr("href", window.location.href);
-        }
         var parametersChanged = false;
         function simulationStarted() {
             parametersChanged = false;
         }
         makeGUI();
         reset(true);
-        hideControls();
     }
     exports.runPlayground = runPlayground;
+    function oneStep(inputData) {
+        nn.forwardProp(network, inputData);
+        var outputData = [];
+        var outputs = network[network.length - 1];
+        for (var j = 0; j < outputs.length; j++) {
+            var node = outputs[j];
+            outputData.push(node.output);
+        }
+        return outputData;
+    }
+    exports.oneStep = oneStep;
 });

@@ -688,21 +688,20 @@ g.column rect {
   stroke-opacity: 0.2;
 }
 
-#network .node {
+#network .node_input rect {
   cursor: default;
-}
-
-#network .node rect {
-  fill: white;
+  fill: red;
   stroke-width: 0;
 }
-
-#network .node.inactive {
-  opacity: 0.5;
+#network .node_hidden rect {
+  cursor: default;
+  fill: green;
+  stroke-width: 0;
 }
-
-#network .node.hovered {
-  opacity: 1.0;
+#network .node_output rect {
+  cursor: default;
+  fill: yellow;
+  stroke-width: 0;
 }
 
 @-webkit-keyframes flowing {

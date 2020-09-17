@@ -24,37 +24,17 @@ enum HoverType {
     BIAS, WEIGHT
 }
 
-interface InputFeature {
-    f: ( label: string ) => number;
-    label: string;
+enum NodeType {
+    INPUT, HIDDEN, OUTPUT
 }
 
-let INPUTS: { [name: string]: InputFeature } = {
-    "i1": { f: ( label: string ) => 0.0, label: "I_1" },
-    "i2": { f: ( label: string ) => 4.0, label: "I_2" },
-    "i3": { f: ( label: string ) => 6.0, label: "I_3" },
+let INPUTS = {
+    "i1": "I_1",
+    "i2": "I_2",
+    "i3": "I_3",
 };
 
-let HIDABLE_CONTROLS = [
-    ["Show test data", "showTestData"],
-    ["Discretize output", "discretize"],
-    ["Play button", "playButton"],
-    ["Step button", "stepButton"],
-    ["Reset button", "resetButton"],
-    ["Learning rate", "learningRate"],
-    ["Activation", "activation"],
-    ["Regularization", "regularization"],
-    ["Regularization rate", "regularizationRate"],
-    ["Problem type", "problem"],
-    ["Which dataset", "dataset"],
-    ["Ratio train data", "percTrainData"],
-    ["Noise level", "noise"],
-    ["Batch size", "batchSize"],
-    ["# of hidden layers", "numHiddenLayers"],
-];
-
 let state = new State();
-var iter = 0;
 
 let linkWidthScale = d3.scale.linear()
     .domain( [0, 5] )
@@ -66,19 +46,11 @@ let colorScale = d3.scale.linear<string, number>()
     .clamp( true );
 
 let boundary: { [id: string]: number[][] } = {};
-let selectedNodeId: string = null;
 let network: nn.Node[][] = null;
 
 export function runPlayground() {
 
     function makeGUI() {
-        d3.select( "#next-step-button" ).on( "click", () => {
-            if ( iter === 0 ) {
-                simulationStarted();
-            }
-            oneStep();
-        } );
-
         d3.select( "#add-layers" ).on( "click", () => {
             if ( state.numHiddenLayers >= 6 ) {
                 return;
@@ -135,7 +107,7 @@ export function runPlayground() {
                     let link = node.inputLinks[j];
                     container.select( `#link${link.source.id}-${link.dest.id}` )
                         .style( {
-                            "stroke-dashoffset": -iter / 3,
+                            "stroke-dashoffset": 0,
                             "stroke-width": linkWidthScale( Math.abs( link.weight ) ),
                             "stroke": colorScale( link.weight )
                         } )
@@ -145,14 +117,14 @@ export function runPlayground() {
         }
     }
 
-    function drawNode( cx: number, cy: number, nodeId: string, isInput: boolean,
+    function drawNode( cx: number, cy: number, nodeId: string, nodeType: NodeType,
         container, node?: nn.Node ) {
         let x = cx - RECT_SIZE / 2;
         let y = cy - RECT_SIZE / 2;
-
+        let nodeClass = nodeType === NodeType.INPUT ? "node_input" : nodeType === NodeType.HIDDEN ? "node_hidden" : "node_output";
         let nodeGroup = container.append( "g" )
             .attr( {
-                "class": "node",
+                "class": nodeClass,
                 "id": `node${nodeId}`,
                 "transform": `translate(${x},${y})`
             } );
@@ -166,9 +138,9 @@ export function runPlayground() {
                 height: RECT_SIZE,
             } );
         let activeOrNotClass = state[nodeId] ? "active" : "inactive";
-        if ( isInput ) {
-            let label = INPUTS[nodeId].label != null ?
-                INPUTS[nodeId].label : nodeId;
+        if ( nodeType === NodeType.INPUT ) {
+            let label = INPUTS[nodeId] != null ?
+                INPUTS[nodeId] : nodeId;
             // Draw the input label.
             let text = nodeGroup.append( "text" ).attr( {
                 class: "main-label",
@@ -200,7 +172,7 @@ export function runPlayground() {
             }
             nodeGroup.classed( activeOrNotClass, true );
         }
-        if ( !isInput ) {
+        if ( nodeType !== NodeType.INPUT ) {
             // Draw the node's bias.
             nodeGroup.append( "rect" )
                 .attr( {
@@ -226,26 +198,8 @@ export function runPlayground() {
                 position: "absolute",
                 left: `${x + 3}px`,
                 top: `${y + 3}px`
-            } )
-            .on( "mouseenter", function() {
-                selectedNodeId = nodeId;
-                div.classed( "hovered", true );
-                nodeGroup.classed( "hovered", true );
-            } )
-            .on( "mouseleave", function() {
-                selectedNodeId = null;
-                div.classed( "hovered", false );
-                nodeGroup.classed( "hovered", false );
             } );
-        if ( isInput ) {
-            div.on( "click", function() {
-                state[nodeId] = !state[nodeId];
-                parametersChanged = true;
-                reset();
-            } );
-            div.style( "cursor", "pointer" );
-        }
-        if ( isInput ) {
+        if ( nodeType === NodeType.INPUT ) {
             div.classed( activeOrNotClass, true );
         }
     }
@@ -291,7 +245,7 @@ export function runPlayground() {
         nodeIds.forEach( ( nodeId, i ) => {
             let cy = nodeIndexScale( i ) + RECT_SIZE / 2;
             node2coord[nodeId] = { cx, cy };
-            drawNode( cx, cy, nodeId, true, container );
+            drawNode( cx, cy, nodeId, NodeType.INPUT, container );
         } );
 
         // Draw the intermediate layers.
@@ -304,7 +258,7 @@ export function runPlayground() {
                 let node = network[layerIdx][i];
                 let cy = nodeIndexScale( i ) + RECT_SIZE / 2;
                 node2coord[node.id] = { cx, cy };
-                drawNode( cx, cy, node.id, false, container, node );
+                drawNode( cx, cy, node.id, NodeType.HIDDEN, container, node );
 
                 // Show callout to thumbnails.
                 let numNodes = network[layerIdx].length;
@@ -356,7 +310,7 @@ export function runPlayground() {
                 let node = outputLayer[j];
                 let cy = nodeIndexScale( j ) + RECT_SIZE / 2;
                 node2coord[node.id] = { cx, cy };
-                drawNode( cx, cy, node.id, false, container, node );
+                drawNode( cx, cy, node.id, NodeType.OUTPUT, container, node );
                 // Draw links.
                 for ( let i = 0; i < node.inputLinks.length; i++ ) {
                     let link = node.inputLinks[i];
@@ -538,24 +492,13 @@ export function runPlayground() {
         return result;
     }
 
-    function oneStep(): void {
-        iter++;
-        nn.forwardProp( network, [0.0, iter + 0.0, iter + 5.0] );
-        let outputs = network[network.length - 1];
-        for ( let j = 0; j < outputs.length; j++ ) {
-            let node = outputs[j];
-            console.log( node.output );
-        }
-        updateUI();
-    }
-
     function reset( onStartup = false ) {
+
         let suffix = state.numHiddenLayers !== 1 ? "s" : "";
         d3.select( "#layers-label" ).text( "Hidden layer" + suffix );
         d3.select( "#num-layers" ).text( state.numHiddenLayers );
 
         // Make a simple network.
-        iter = 0;
         let numInputs = 3;
         let shape = [numInputs].concat( state.networkShape ).concat( [3] );
         let outputActivation = nn.Activations.LINEAR; // was: TANH;
@@ -565,44 +508,6 @@ export function runPlayground() {
         updateUI( true );
     };
 
-    function hideControls() {
-        // Set display:none to all the UI elements that are hidden.
-        let hiddenProps = []; // TODO: state.getHiddenProps();
-        hiddenProps.forEach( prop => {
-            let controls = d3.selectAll( `.ui-${prop}` );
-            if ( controls.size() === 0 ) {
-                console.warn( `0 html elements found with class .ui-${prop}` );
-            }
-            controls.style( "display", "none" );
-        } );
-
-        // Also add checkbox for each hidable control in the "use it in classrom"
-        // section.
-        let hideControls = d3.select( ".hide-controls" );
-        HIDABLE_CONTROLS.forEach( ( [text, id] ) => {
-            let label = hideControls.append( "label" )
-                .attr( "class", "mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" );
-            let input = label.append( "input" )
-                .attr( {
-                    type: "checkbox",
-                    class: "mdl-checkbox__input",
-                } );
-            if ( hiddenProps.indexOf( id ) === -1 ) {
-                input.attr( "checked", "true" );
-            }
-            input.on( "change", function() {
-                state.setHideProperty( id, !this.checked );
-                d3.select( ".hide-controls-link" )
-                    .attr( "href", window.location.href );
-            } );
-            label.append( "span" )
-                .attr( "class", "mdl-checkbox__label label" )
-                .text( text );
-        } );
-        d3.select( ".hide-controls-link" )
-            .attr( "href", window.location.href );
-    }
-
     let parametersChanged = false;
 
     function simulationStarted() {
@@ -611,17 +516,16 @@ export function runPlayground() {
 
     makeGUI();
     reset( true );
-    hideControls();
 }
 
-export function oneStep(): void {
-    iter++;
-    nn.forwardProp( network, [0.0, iter + 0.0, iter + 5.0] );
+export function oneStep( inputData: number[] ): number[] {
+    nn.forwardProp( network, inputData );
+    var outputData = [];
     let outputs = network[network.length - 1];
     for ( let j = 0; j < outputs.length; j++ ) {
         let node = outputs[j];
-        console.log( node.output );
+        outputData.push( node.output );
     }
-    updateUI();
+    return outputData;
 }
 
