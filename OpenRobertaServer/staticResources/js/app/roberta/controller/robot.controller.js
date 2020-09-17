@@ -1,6 +1,6 @@
 define([ 'exports', 'util', 'log', 'message', 'guiState.controller', 'guiState.model', 'robot.model', 'program.controller', 'configuration.controller',
-        'webview.controller', 'socket.controller', 'sourceCodeEditor.controller', 'progCode.controller', 'releaseInfo.controller', 'jquery', 'jquery-validate' ], function(exports, UTIL, LOG, MSG, GUISTATE_C, GUISTATE, ROBOT, PROGRAM_C,
-        CONFIGURATION_C, WEBVIEW_C, SOCKET_C, CODEEDITOR_C, PROGCODE_C, RELEASEINFO_C, $) {
+        'webview.controller', 'socket.controller', 'sourceCodeEditor.controller', 'progCode.controller', 'releaseInfo.controller', 'notification.controller' ,'jquery', 'jquery-validate' ], function(exports, UTIL, LOG, MSG, GUISTATE_C, GUISTATE, ROBOT, PROGRAM_C,
+        CONFIGURATION_C, WEBVIEW_C, SOCKET_C, CODEEDITOR_C, PROGCODE_C, RELEASEINFO_C, NOTIFICATION_C, $) {
 
     var $formSingleModal;
     var $formSingleListModal;
@@ -323,10 +323,13 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.controller', 'guiState.m
         }
         if (further || (GUISTATE_C.isProgramSaved() && GUISTATE_C.isConfigurationSaved())) {
             if (robot === GUISTATE_C.getRobot()) {
+                NOTIFICATION_C.showForRobot(robot)
                 RELEASEINFO_C.showForRobot(robot);
                 typeof opt_callback === "function" && opt_callback();
                 return;
             }
+
+
             ROBOT.setRobot(robot, function(result) {
                 if (result.rc === "ok") {
                     if (GUISTATE_C.findGroup(robot) != GUISTATE_C.getRobotGroup()) {
@@ -349,6 +352,7 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.controller', 'guiState.m
                     CODEEDITOR_C.setCodeLanguage(GUISTATE_C.getSourceCodeFileExtension());
                     CODEEDITOR_C.resetScroll();
                     RELEASEINFO_C.showForRobot(robot);
+                    NOTIFICATION_C.showForRobot(robot)
                     //TODO inform app if one is there
 //                    WEBVIEW_C.jsToAppInterface({
 //                        'target' : 'wedo',
