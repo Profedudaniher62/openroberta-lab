@@ -32,6 +32,7 @@ require.config({
 		'logList.model': '../app/roberta/models/logList.model',
 		'menu.controller': '../app/roberta/controller/menu.controller',
 		'multSim.controller': '../app/roberta/controller/multSim.controller',
+		'notification.controller': '../app/roberta/controller/notification.controller',
 		'progCode.controller': '../app/roberta/controller/progCode.controller',
 		'progDelete.controller': '../app/roberta/controller/progDelete.controller',
 		'progHelp.controller': '../app/roberta/controller/progHelp.controller',
@@ -49,14 +50,14 @@ require.config({
 		'robot.model': '../app/roberta/models/robot.model',
 		'tour.controller': '../app/roberta/controller/tour.controller',
 		'user.controller': '../app/roberta/controller/user.controller',
-		'userGroup.controller' : '../app/roberta/controller/userGroup.controller',
-        'userGroup.model' : '../app/roberta/models/userGroup.model',
-        'user.model': '../app/roberta/models/user.model',
+		'userGroup.controller': '../app/roberta/controller/userGroup.controller',
+		'userGroup.model': '../app/roberta/models/userGroup.model',
+		'user.model': '../app/roberta/models/user.model',
 		'rest.robot': '../app/roberta/rest/robot',
 		'socket.controller': '../app/roberta/controller/socket.controller',
 		'webview.controller': '../app/roberta/controller/webview.controller',
 		'wedo.model': '../app/roberta/models/wedo.model',
-		'releaseInfo.controller' : '../app/roberta/controller/releaseInfo.controller',
+		'releaseInfo.controller': '../app/roberta/controller/releaseInfo.controller',
 		'sourceCodeEditor.controller': '../app/roberta/controller/sourceCodeEditor.controller',
 
 		'simulation.constants': '../app/simulation/simulationLogic/constants',
@@ -104,7 +105,7 @@ require.config({
 
 		'volume-meter': {
 			exports: "Volume",
-			init: function() {
+			init: function () {
 				return {
 					createAudioMeter: createAudioMeter
 				};
@@ -118,11 +119,11 @@ require.config({
 
 require(['require', 'wrap', 'log', 'jquery', 'guiState.controller', 'progList.controller', 'logList.controller', 'confList.controller',
 	'progDelete.controller', 'confDelete.controller', 'progShare.controller', 'menu.controller', 'multSim.controller', 'user.controller',
-	'robot.controller', 'program.controller', 'progSim.controller', 'progCode.controller', 'progDelete.controller', 'progHelp.controller',
+	'robot.controller', 'program.controller', 'progSim.controller', 'notification.controller', 'progCode.controller', 'progDelete.controller', 'progHelp.controller',
 	'legal.controller', 'progInfo.controller', 'progRun.controller', 'configuration.controller', 'language.controller', 'socket.controller',
 	'progTutorial.controller', 'tutorialList.controller', 'userGroup.controller', 'volume-meter', 'user.model', 'webview.controller',
-	'releaseInfo.controller', 'sourceCodeEditor.controller', 'codeflask', 'stackmachineJsHelper'], function(
-		require) {
+	'releaseInfo.controller', 'sourceCodeEditor.controller', 'codeflask', 'stackmachineJsHelper'], function (
+	require) {
 	$ = require('jquery');
 	WRAP = require('wrap');
 	LOG = require('log');
@@ -143,6 +144,7 @@ require(['require', 'wrap', 'log', 'jquery', 'guiState.controller', 'progList.co
 	programController = require('program.controller');
 	progHelpController = require('progHelp.controller');
 	progInfoController = require('progInfo.controller');
+	notificationController = require('notification.controller');
 	progCodeController = require('progCode.controller');
 	progSimController = require('progSim.controller');
 	progRunController = require('progRun.controller');
@@ -154,8 +156,8 @@ require(['require', 'wrap', 'log', 'jquery', 'guiState.controller', 'progList.co
 	tutorialController = require('progTutorial.controller');
 	tutorialListController = require('tutorialList.controller');
 	userGroupController = require('userGroup.controller');
-    webviewController = require('webview.controller');
-    releaseInfoController = require('releaseInfo.controller');
+	webviewController = require('webview.controller');
+	releaseInfoController = require('releaseInfo.controller');
 	sourceCodeEditorController = require('sourceCodeEditor.controller');
 	codeflask = require('codeflask');
 	stackmachineJsHelper = require('stackmachineJsHelper');
@@ -168,16 +170,16 @@ require(['require', 'wrap', 'log', 'jquery', 'guiState.controller', 'progList.co
  */
 function init() {
 	COMM.setErrorFn(handleServerErrors);
-	$.when(languageController.init()).then(function(language) {
+	$.when(languageController.init()).then(function (language) {
 		return webviewController.init(language);
-	}).then(function(language, opt_data) {
+	}).then(function (language, opt_data) {
 		return guiStateController.init(language, opt_data);
-	}).then(function() {
-	    releaseInfoController.init();
+	}).then(function () {
+		releaseInfoController.init();
 		return robotController.init();
-	}).then(function() {
+	}).then(function () {
 		return userController.init();
-	}).then(function() {
+	}).then(function () {
 		galleryListController.init();
 		tutorialListController.init();
 		progListController.init();
@@ -192,16 +194,17 @@ function init() {
 		configurationController.init();
 		progHelpController.init();
 		progInfoController.init();
+		notificationController.init();
 		progCodeController.init();
 		progSimController.init();
 		progRunController.init();
 		menuController.init();
 		tutorialController.init();
-        userGroupController.init();
+		userGroupController.init();
 
-		$(".cover").fadeOut(100, function() {
+		$(".cover").fadeOut(100, function () {
 			if (guiStateController.getStartWithoutPopup()) {
-				userModel.getStatusText(function(result) {
+				userModel.getStatusText(function (result) {
 					if (result.statustext[0] !== "" && result.statustext[1] !== "") {
 						$('#modal-statustext').modal("show");
 					}
@@ -221,7 +224,7 @@ function init() {
 ALLOWED_PING_NUM = 5
 
 function handleServerErrors(jqXHR) {
-	// TODO more?  
+	// TODO more?
 	LOG.error("Client connection issue: " + jqXHR.status);
 	if (this.url === "/rest/ping") {
 		COMM.errorNum += 1;
