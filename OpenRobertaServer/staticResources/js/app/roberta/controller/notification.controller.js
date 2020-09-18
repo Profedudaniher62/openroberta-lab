@@ -9,24 +9,38 @@ define(
 		const notificationElementTitle = notificationElement.children('#releaseInfoTitle');
 		const notificationElementDescription = notificationElement.children('#releaseInfoContent');
 
-		exports.init = function () {
-			console.log("Init notifications, here load config from guiState / use from guiState")
+		function onRobotChanged(robot) {
+			console.log(`Robot has changed: ${robot}`);
 		}
 
-		exports.showForRobot = function (robot) {
-			console.log(`Show robot ${robot}`);
-			showNotificationForTime(`Notification for ${guiStateController.getRobot()}`, "It works")
+		function onViewChanged(view) {
+			console.log(`View has changed: ${view}`);
+		}
+
+		function onProgramChanged(program) {
+			console.log(`Program has changed: ${program}`);
+		}
+
+		function initCallbacks() {
+			guiStateController.onViewChanged(onViewChanged);
+			guiStateController.onRobotChanged(onRobotChanged)
+			guiStateController.onProgramChanged(onProgramChanged)
+		}
+
+		exports.init = function () {
+			initCallbacks()
+			console.log("Init notifications, here load config from guiState / use from guiState")
 		};
 
 		exports.showForSimulation = function () {
 			console.log(`Show simulation notification for ${guiStateController.getRobot()}`);
 			showNotification(`Notification for ${guiStateController.getRobot()}`, "It works")
-		}
+		};
 
 		exports.hideForSimulation = function () {
 			console.log(`Hide simulation notification for ${guiStateController.getRobot()}`)
 			hideNotification()
-		}
+		};
 
 
 		/**

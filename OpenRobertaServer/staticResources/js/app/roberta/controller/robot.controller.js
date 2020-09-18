@@ -323,7 +323,6 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.controller', 'guiState.m
         }
         if (further || (GUISTATE_C.isProgramSaved() && GUISTATE_C.isConfigurationSaved())) {
             if (robot === GUISTATE_C.getRobot()) {
-                NOTIFICATION_C.showForRobot(robot)
                 RELEASEINFO_C.showForRobot(robot);
                 typeof opt_callback === "function" && opt_callback();
                 return;
@@ -352,7 +351,6 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.controller', 'guiState.m
                     CODEEDITOR_C.setCodeLanguage(GUISTATE_C.getSourceCodeFileExtension());
                     CODEEDITOR_C.resetScroll();
                     RELEASEINFO_C.showForRobot(robot);
-                    NOTIFICATION_C.showForRobot(robot)
                     //TODO inform app if one is there
 //                    WEBVIEW_C.jsToAppInterface({
 //                        'target' : 'wedo',

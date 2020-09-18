@@ -3,6 +3,11 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
 
     var LONG = 300000; // Ping time 5min
     var SHORT = 3000; // Ping time 3sec
+
+    var onViewChangedCallback;
+    var onRobotChangedCallback;
+    var onProgramChangedCallback;
+
     /**
      * Init robot
      */
@@ -251,6 +256,10 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
     }
     exports.setBricklyWorkspace = setBricklyWorkspace;
 
+    exports.onRobotChanged = function(callback) {
+        onRobotChangedCallback = callback;
+    }
+
     function setRobot(robot, result, opt_init) {
         // make sure we use the group instead of the specific robottype if the robot belongs to a group
         var robotGroup = findGroup(robot);
@@ -305,66 +314,66 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
         var connectionType = getConnection();
         $('#robotConnect').removeClass('disabled');
         switch (getConnection()) {
-        case GUISTATE.gui.connectionType.TOKEN:
-            SOCKET_C.listRobotStop();
-            $('#head-navi-icon-robot').removeClass('error');
-            $('#head-navi-icon-robot').removeClass('busy');
-            $('#head-navi-icon-robot').removeClass('wait');
-            if (GUISTATE.gui.blocklyWorkspace) {
-                GUISTATE.gui.blocklyWorkspace.robControls.disable('runOnBrick');
-            }
-            $('.menuRunProg').addClass('disabled');
-            $('#runSourceCodeEditor').addClass('disabled');
-            $('#menuConnect').parent().removeClass('disabled');
-            setPingTime(SHORT);
-            break;
-        case GUISTATE.gui.connectionType.LOCAL:
-        case GUISTATE.gui.connectionType.AUTO:
-        case GUISTATE.gui.connectionType.JSPLAY:
-            SOCKET_C.listRobotStop();
-            $('#head-navi-icon-robot').removeClass('error');
-            $('#head-navi-icon-robot').removeClass('busy');
-            $('#head-navi-icon-robot').addClass('wait');
-            if (GUISTATE.gui.blocklyWorkspace) {
-                GUISTATE.gui.blocklyWorkspace.robControls.enable('runOnBrick');
-            }
-            $('.menuRunProg').removeClass('disabled');
-            $('#runSourceCodeEditor').removeClass('disabled');
-            $('#menuConnect').parent().addClass('disabled');
-            setPingTime(LONG);
-            break;
-        case GUISTATE.gui.connectionType.AGENTORTOKEN:
-            SOCKET_C.listRobotStart();
-            if (GUISTATE.gui.isAgent == true) {
-                updateMenuStatus();
-            } else {
+            case GUISTATE.gui.connectionType.TOKEN:
+                SOCKET_C.listRobotStop();
+                $('#head-navi-icon-robot').removeClass('error');
+                $('#head-navi-icon-robot').removeClass('busy');
+                $('#head-navi-icon-robot').removeClass('wait');
+                if (GUISTATE.gui.blocklyWorkspace) {
+                    GUISTATE.gui.blocklyWorkspace.robControls.disable('runOnBrick');
+                }
+                $('.menuRunProg').addClass('disabled');
+                $('#runSourceCodeEditor').addClass('disabled');
                 $('#menuConnect').parent().removeClass('disabled');
-            }
-            $('#runSourceCodeEditor').addClass('disabled');
-            setPingTime(SHORT);
-            break;
-        case GUISTATE.gui.connectionType.WEBVIEW:
-            SOCKET_C.listRobotStop();
-            $('#head-navi-icon-robot').removeClass('error');
-            $('#head-navi-icon-robot').removeClass('busy');
-            $('#head-navi-icon-robot').removeClass('wait');
-            if (GUISTATE.gui.blocklyWorkspace) {
-                GUISTATE.gui.blocklyWorkspace.robControls.disable('runOnBrick');
-            }
-            $('.menuRunProg').addClass('disabled');
-            $('#menuConnect').parent().removeClass('disabled');
-            // are we in an Open Roberta Webview
-            if (inWebview()) {
-                $('#robotConnect').removeClass('disabled');
-            } else {
-                $('#robotConnect').addClass('disabled');
-            }
-            $('#runSourceCodeEditor').addClass('disabled');
-            setPingTime(LONG);
-            break;
-        default:
-            setPingTime(SHORT);
-            break;
+                setPingTime(SHORT);
+                break;
+            case GUISTATE.gui.connectionType.LOCAL:
+            case GUISTATE.gui.connectionType.AUTO:
+            case GUISTATE.gui.connectionType.JSPLAY:
+                SOCKET_C.listRobotStop();
+                $('#head-navi-icon-robot').removeClass('error');
+                $('#head-navi-icon-robot').removeClass('busy');
+                $('#head-navi-icon-robot').addClass('wait');
+                if (GUISTATE.gui.blocklyWorkspace) {
+                    GUISTATE.gui.blocklyWorkspace.robControls.enable('runOnBrick');
+                }
+                $('.menuRunProg').removeClass('disabled');
+                $('#runSourceCodeEditor').removeClass('disabled');
+                $('#menuConnect').parent().addClass('disabled');
+                setPingTime(LONG);
+                break;
+            case GUISTATE.gui.connectionType.AGENTORTOKEN:
+                SOCKET_C.listRobotStart();
+                if (GUISTATE.gui.isAgent == true) {
+                    updateMenuStatus();
+                } else {
+                    $('#menuConnect').parent().removeClass('disabled');
+                }
+                $('#runSourceCodeEditor').addClass('disabled');
+                setPingTime(SHORT);
+                break;
+            case GUISTATE.gui.connectionType.WEBVIEW:
+                SOCKET_C.listRobotStop();
+                $('#head-navi-icon-robot').removeClass('error');
+                $('#head-navi-icon-robot').removeClass('busy');
+                $('#head-navi-icon-robot').removeClass('wait');
+                if (GUISTATE.gui.blocklyWorkspace) {
+                    GUISTATE.gui.blocklyWorkspace.robControls.disable('runOnBrick');
+                }
+                $('.menuRunProg').addClass('disabled');
+                $('#menuConnect').parent().removeClass('disabled');
+                // are we in an Open Roberta Webview
+                if (inWebview()) {
+                    $('#robotConnect').removeClass('disabled');
+                } else {
+                    $('#robotConnect').addClass('disabled');
+                }
+                $('#runSourceCodeEditor').addClass('disabled');
+                setPingTime(LONG);
+                break;
+            default:
+                setPingTime(SHORT);
+                break;
         }
 
         var groupSwitched = false;
@@ -393,10 +402,10 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
             HELP_C.initView();
             if (inWebview()) {
                 WEBVIEW_C.jsToAppInterface({
-                    'target' : 'internal',
-                    'type' : 'setRobot',
-                    'robot' : robotGroup
-                });                
+                    'target': 'internal',
+                    'type': 'setRobot',
+                    'robot': robotGroup
+                });
             }
         }
 
@@ -407,6 +416,10 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
         }
 
         UTIL.clearTabAlert('tabConfiguration'); // also clear tab alert when switching robots
+
+        if (onRobotChangedCallback) {
+            onRobotChangedCallback(GUISTATE.gui.robot);
+        }
     }
     exports.setRobot = setRobot;
 
@@ -610,6 +623,10 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
     }
     exports.hasRobotDefaultFirmware = hasRobotDefaultFirmware;
 
+    exports.onViewChanged = function(callback) {
+        onViewChangedCallback = callback;
+    }
+
     function setView(view) {
         $('#head-navi-tooltip-program').attr('data-toggle', 'dropdown');
         $('#head-navi-tooltip-configuration').attr('data-toggle', 'dropdown');
@@ -620,6 +637,7 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
         $(".modal").modal("hide");
         GUISTATE.gui.prevView = GUISTATE.gui.view;
         GUISTATE.gui.view = view;
+
         if (!isRobotConnected()) {
             $('.menuRunProg').addClass('disabled');
             getBlocklyWorkspace().robControls.disable('runOnBrick');
@@ -653,6 +671,10 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
             $('#head-navi-tooltip-configuration').attr('data-toggle', '');
             $('#head-navigation-program-edit').addClass('disabled');
             $('#head-navigation-configuration-edit').addClass('disabled');
+        }
+
+        if (onViewChangedCallback) {
+            onViewChangedCallback(GUISTATE.gui.view);
         }
     }
 
@@ -1074,6 +1096,10 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
 
     exports.setLogout = setLogout;
 
+    exports.onProgramChanged = function(callback) {
+        onProgramChangedCallback = callback;
+    }
+
     function setProgram(result, opt_owner, opt_author) {
         if (result) {
             GUISTATE.program.shared = result.programShared;
@@ -1099,6 +1125,10 @@ define([ 'exports', 'util', 'log', 'message', 'guiState.model', 'progHelp.contro
                 setProgramOwnerName(null);
             }
             setProgramName(result.name);
+
+            if (onProgramChangedCallback) {
+                onProgramChangedCallback(GUISTATE.program);
+            }
         }
     }
     exports.setProgram = setProgram;
