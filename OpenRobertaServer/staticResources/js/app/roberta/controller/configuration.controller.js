@@ -352,10 +352,6 @@ define([ 'exports', 'log', 'util', 'comm', 'message', 'guiState.controller', 'bl
     exports.changeRobotSvg = changeRobotSvg;
 
     function resetView() {
-        if(confVis){
-            confVis.dispose();
-            confVis = null;
-        }
         bricklyWorkspace.setDevice({
             group : GUISTATE_C.getRobotGroup(),
             robot : GUISTATE_C.getRobot()
@@ -370,6 +366,13 @@ define([ 'exports', 'log', 'util', 'comm', 'message', 'guiState.controller', 'bl
         return GUISTATE_C.getView() == 'tabConfiguration';
     }
 
+    function resetConfVisIfAvailable() {
+        if(confVis){
+            confVis.dispose();
+            confVis = null;
+        }
+    }
+
     function configurationToBricklyWorkspace(xml) {
         // removing changelistener in blockly doesn't work, so no other way
         listenToBricklyEvents = false;
@@ -377,6 +380,7 @@ define([ 'exports', 'log', 'util', 'comm', 'message', 'guiState.controller', 'bl
         bricklyWorkspace.clear();
         Blockly.svgResize(bricklyWorkspace);
         var dom = Blockly.Xml.textToDom(xml, bricklyWorkspace);
+        resetConfVisIfAvailable();
         if(bricklyWorkspace.device === 'arduino' || bricklyWorkspace.device === 'microbit'){
             confVis = CircuitVisualization.domToWorkspace(dom, bricklyWorkspace);
         } else {
