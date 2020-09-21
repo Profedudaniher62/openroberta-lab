@@ -1,7 +1,37 @@
 define(
-	["require", "exports", "guiState.controller"],
+	["require", "exports", "guiState.controller", "guiState.model"],
 	function (require, exports) {
 		const guiStateController = require("guiState.controller");
+		const guiStateModel = require("guiState.model");
+
+		const notifications = [
+			{
+				triggers: [
+					{
+						htmlId: "tabProgram",
+						event: "click",
+						conditions: [
+							model => model.gui.robot === "calliope2017NoBlue",
+						]
+					},
+					{
+						htmlId: "menu-calliope2017NoBlue",
+						event: "click"
+					},
+					{
+						htmlSelector: ".popup-robot[data-type='calliope2017NoBlue']:not(.slick-cloned)",
+						event: "click"
+					}
+				],
+				/*conditions: [
+					Here it is also possible to define conditions
+				],*/
+				handle: () => {
+					console.log("Show notification")
+					showNotificationForTime("Hey, Calliope", "Wow ES6");
+				}
+			}
+		]
 
 		const fadingDuration = 400;
 
@@ -11,23 +41,53 @@ define(
 
 		exports.init = function () {
 			console.log("Init notifications, here load config from guiState / use from guiState")
+			initEvents();
 		}
 
-		exports.showForRobot = function (robot) {
-			console.log(`Show robot ${robot}`);
-			showNotificationForTime(`Notification for ${guiStateController.getRobot()}`, "It works")
-		};
+		function initEvents() {
+			notifications
+				.forEach(({triggers, conditions, handle, once}) => {
+					const unregisterEventListeners = () => {
+						triggers.forEach(({htmlId, event, htmlSelector}) => {
+							if (htmlId && event) {
+								$(`#${htmlId}`).off(event, onEvent)
+							} else if (htmlSelector && event) {
+								$(htmlSelector).off(event, onEvent)
+							}
+						})
+					}
 
-		exports.showForSimulation = function () {
-			console.log(`Show simulation notification for ${guiStateController.getRobot()}`);
-			showNotification(`Notification for ${guiStateController.getRobot()}`, "It works")
+					const onEvent = (e, specificConditions) => {
+						console.log("in onEvent")
+
+						let specificConditionsAreTrue = !specificConditions || specificConditions.every(isTrue => isTrue(guiStateModel));
+						let genericConditionsAreTrue = !conditions || conditions.every(isTrue => isTrue(guiStateModel));
+
+						if (genericConditionsAreTrue && specificConditionsAreTrue) {
+							handle(e)
+							if (once) unregisterEventListeners();
+						}
+					}
+
+					triggers.forEach((trigger) => {
+
+						/**
+						 * Note: Event handlers attached using the on() method will work for both current and FUTURE elements (like a new element created by a script).
+						 * https://www.w3schools.com/jquery/event_on.asp
+						 */
+
+						if (trigger.htmlId && trigger.event) {
+							console.log({htmlId: trigger.htmlId, event: trigger.event})
+
+							$(`#${(trigger.htmlId)}`).on(trigger.event, e => onEvent(e, trigger.conditions))
+						} else if (trigger.htmlSelector && trigger.event) {
+							console.log({htmlSelector: trigger.htmlSelector, event: trigger.event})
+
+							$(`${(trigger.htmlSelector)}`).on(trigger.event, e => onEvent(e, trigger.conditions))
+						}
+					})
+				})
 		}
-
-		exports.hideForSimulation = function () {
-			console.log(`Hide simulation notification for ${guiStateController.getRobot()}`)
-			hideNotification()
-		}
-
 
 		/**
 		 *
@@ -35,7 +95,7 @@ define(
 		 * @param {String} description
 		 * @param {Number} time
 		 */
-		function showNotificationForTime(title, description, time = 2000) {
+		function showNotificationForTime(title, description, time = 8000) {
 			setContent(title, description);
 			$(notificationElement)
 				.fadeIn(fadingDuration)
