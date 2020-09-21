@@ -6,6 +6,7 @@ define(
 
 		const notifications = [
 			{
+				once: true,
 				triggers: [
 					{
 						htmlId: "tabProgram",
@@ -46,22 +47,18 @@ define(
 
 		function initEvents() {
 			notifications
-				.forEach(({triggers, conditions, handle, once}) => {
+				.forEach(({triggers, conditions: genericConditions, handle, once}) => {
+					let unregisterFunctions = []
+
 					const unregisterEventListeners = () => {
-						triggers.forEach(({htmlId, event, htmlSelector}) => {
-							if (htmlId && event) {
-								$(`#${htmlId}`).off(event, onEvent)
-							} else if (htmlSelector && event) {
-								$(htmlSelector).off(event, onEvent)
-							}
-						})
+						unregisterFunctions.forEach(f => f())
 					}
 
-					const onEvent = (e, specificConditions) => {
+					const checkForConditionsAndHandle = (e, specificConditions) => {
 						console.log("in onEvent")
 
 						let specificConditionsAreTrue = !specificConditions || specificConditions.every(isTrue => isTrue(guiStateModel));
-						let genericConditionsAreTrue = !conditions || conditions.every(isTrue => isTrue(guiStateModel));
+						let genericConditionsAreTrue = !genericConditions || genericConditions.every(isTrue => isTrue(guiStateModel));
 
 						if (genericConditionsAreTrue && specificConditionsAreTrue) {
 							handle(e)
@@ -69,22 +66,25 @@ define(
 						}
 					}
 
-					triggers.forEach((trigger) => {
+					unregisterFunctions = triggers.map(({conditions: specificConditions, event, htmlId, htmlSelector}) => {
 
 						/**
-						 * Note: Event handlers attached using the on() method will work for both current and FUTURE elements (like a new element created by a script).
-						 * https://www.w3schools.com/jquery/event_on.asp
+						 * Rewriting the .live() method in terms of its successors is straightforward; these are templates for equivalent calls for all three event attachment methods:
+						 * $( selector ).live( events, data, handler );                // jQuery 1.3+
+						 * $( document ).on( events, selector, data, handler );        // jQuery 1.7+
+						 * https://api.jquery.com/live/
 						 */
 
-						if (trigger.htmlId && trigger.event) {
-							console.log({htmlId: trigger.htmlId, event: trigger.event})
+						let eventHandler = e => checkForConditionsAndHandle(e, specificConditions);
 
-							$(`#${(trigger.htmlId)}`).on(trigger.event, e => onEvent(e, trigger.conditions))
-						} else if (trigger.htmlSelector && trigger.event) {
-							console.log({htmlSelector: trigger.htmlSelector, event: trigger.event})
-
-							$(`${(trigger.htmlSelector)}`).on(trigger.event, e => onEvent(e, trigger.conditions))
+						if (htmlId && event) {
+							$(document).on(event, `#${(htmlId)}`, eventHandler);
+							return () => $(document).off(event, `#${(htmlId)}`, eventHandler);
+						} else if (htmlSelector && event) {
+							$(document).on(event, htmlSelector, eventHandler);
+							return () => $(document).off(event, htmlSelector, eventHandler);
 						}
+
 					})
 				})
 		}
