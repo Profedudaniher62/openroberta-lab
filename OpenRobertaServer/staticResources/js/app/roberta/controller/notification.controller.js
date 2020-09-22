@@ -1,7 +1,8 @@
 define(
-	["require", "exports", "guiState.model"],
+	["require", "exports", "guiState.model", "guiState.controller"],
 	function (require, exports) {
 		const guiStateModel = require("guiState.model");
+		const guiStateController = require("guiState.controller");
 
 		const notifications = [
 			{
@@ -40,10 +41,30 @@ define(
 				/*conditions: [
 					Here it is also possible to define conditions
 				],*/
-				handle: () => {
-					console.log("Show notification")
-					showNotificationForTime("Hey, Calliope", "Wow ES6");
-				}
+				handlers: [
+					{
+						popupNotification: {
+							time: 5000, // ms
+							title: {
+								de: "Konfiguration",
+								en: "Configuration",
+
+							},
+							description: {
+								de: "Hey, Calliope benutzt nun eine Konfiguration",
+								en: "Hey, Calliope now uses a configuration",
+							}
+						}
+					},
+					{
+						elementMarker: {
+							htmlId: "tabConfiguration",
+							content: {
+								de: "Neu"
+							}
+						}
+					}
+				]
 			},
 			{
 				once: false,
@@ -59,10 +80,21 @@ define(
 						equals: "ev3lejosv1",
 					},
 				],
-				handle: () => {
-					console.log("Show notification")
-					showNotificationForTime("Hey, EV3", "Wow ES6");
-				}
+				handlers: [
+					{
+						popupNotification: {
+							time: 5000, // ms
+							title: {
+								de: "Simulationsanpassung",
+								en: "Simulation changes",
+							},
+							description: {
+								de: "Hey, wir haben die Simulation angepasst.",
+								en: "Hey, we changed the simulation ...",
+							}
+						},
+					},
+				]
 			}
 		]
 
@@ -85,7 +117,7 @@ define(
 				if (equals) {
 					return guiStateModel.gui[guiModel] === equals;
 				}
-				if (notEquals)  {
+				if (notEquals) {
 					return guiStateModel.gui[guiModel] !== notEquals;
 				}
 			}
@@ -95,6 +127,34 @@ define(
 				}
 			}
 			return true
+		}
+
+
+		function parseSelector(element) {
+			return element.htmlId ? `#${(element.htmlId)}` : element.htmlSelector;
+		}
+
+		function parseLocalized(object) {
+			let localizedDescription = object[guiStateController.getLanguage()];
+			return localizedDescription || object;
+		}
+
+		function handleNotification(handlers) {
+			handlers.forEach(({elementMarker, popupNotification}) => {
+				if (popupNotification) {
+					const title = parseLocalized(popupNotification.title);
+					const description = parseLocalized(popupNotification.description);
+					const time = popupNotification.time || 5000
+					showNotificationForTime(title, description, time);
+				}
+				if (elementMarker) {
+					const $element = $(parseSelector(elementMarker));
+					if ($element.length) {
+						const content = parseLocalized(elementMarker.content)
+						$(`<span class='badge badge-primary'>${content}</span>`).appendTo($element)
+					}
+				}
+			})
 		}
 
 		function initEvents() {
@@ -125,7 +185,7 @@ define(
 					let genericConditionsAreTrue = !notification.conditions || notification.conditions.every(cond => evaluateCondition(cond));
 
 					if (genericConditionsAreTrue && specificConditionsAreTrue) {
-						notification.handle(e)
+						handleNotification(notification.handlers)
 						if (notification.once) unregisterEventListeners();
 					}
 				}
@@ -146,7 +206,7 @@ define(
 
 					let eventHandler = e => checkForConditionsAndHandle(e, trigger.conditions);
 
-					let selector = htmlId ? `#${htmlId}` : htmlSelector;
+					let selector = parseSelector(trigger);
 
 					if (selector && event) {
 						registerEventListener(selector, event, eventHandler);
