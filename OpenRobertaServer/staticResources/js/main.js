@@ -191,13 +191,13 @@ function init() {
 		configurationController.init();
 		progHelpController.init();
 		progInfoController.init();
-		notificationController.init();
 		progCodeController.init();
 		progSimController.init();
 		progRunController.init();
 		menuController.init();
 		tutorialController.init();
 		userGroupController.init();
+		notificationController.init();
 
 		$(".cover").fadeOut(100, function () {
 			if (guiStateController.getStartWithoutPopup()) {
