@@ -151,7 +151,9 @@ define(
 					const $element = $(parseSelector(elementMarker));
 					if ($element.length) {
 						const content = parseLocalized(elementMarker.content)
-						$(`<span class='badge badge-primary'>${content}</span>`).appendTo($element)
+						let $badge = $(`<span class='badge badge-primary' style="display:none;">${content}</span>`);
+						$badge.appendTo($element);
+						$badge.fadeIn();
 					}
 				}
 			})
