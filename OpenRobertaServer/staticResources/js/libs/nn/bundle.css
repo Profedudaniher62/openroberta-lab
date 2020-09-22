@@ -690,18 +690,21 @@ g.column rect {
 
 #network .node_input rect {
   cursor: default;
-  fill: red;
-  stroke-width: 0;
+  fill: rgb(143, 164, 2);
+  stroke-width: 1;
+  stroke: black;
 }
 #network .node_hidden rect {
   cursor: default;
-  fill: green;
-  stroke-width: 0;
+  fill: rgb(144, 133, 186);
+  stroke-width: 1;
+  stroke: black;
 }
 #network .node_output rect {
   cursor: default;
-  fill: yellow;
-  stroke-width: 0;
+  fill: rgb(242, 148, 0);
+  stroke-width: 1;
+  stroke: black;
 }
 
 @-webkit-keyframes flowing {
