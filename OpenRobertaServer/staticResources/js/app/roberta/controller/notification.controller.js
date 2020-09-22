@@ -16,14 +16,20 @@ define(
 						htmlId: "tabProgram",
 						event: "click",
 						conditions: [
-							model => model.gui.robot === "calliope2017NoBlue",
+							{
+								guiModel: "robot",
+								equals: "calliope2017NoBlue",
+							},
 						]
 					},
 					{
 						htmlId: "menu-calliope2017NoBlue",
 						event: "click",
 						conditions: [
-							model => model.gui.view === "tabProgram",
+							{
+								guiModel: "view",
+								equals: "tabProgram"
+							}
 						]
 					},
 					{
@@ -40,15 +46,18 @@ define(
 				}
 			},
 			{
-				once: true,
+				once: false,
 				triggers: [
 					{
 						htmlId: "simButton",
-						event: "click",
+						addClass: "rightActive",
 					},
 				],
 				conditions: [
-					model => model.gui.robot === "ev3lejosv1",
+					{
+						guiModel: "robot",
+						equals: "ev3lejosv1",
+					},
 				],
 				handle: () => {
 					console.log("Show notification")
@@ -68,19 +77,52 @@ define(
 			initEvents();
 		}
 
+		function evaluateCondition({callback, element, equals, notEquals, guiModel, hasClass}) {
+			if (callback) {
+				return callback(guiStateModel);
+			}
+			if (guiModel) {
+				if (equals) {
+					return guiStateModel.gui[guiModel] === equals;
+				}
+				if (notEquals)  {
+					return guiStateModel.gui[guiModel] !== notEquals;
+				}
+			}
+			if (element) {
+				if (hasClass) {
+					return $(element).hasClass(hasClass);
+				}
+			}
+			return true
+		}
+
 		function initEvents() {
 			notifications.forEach(notification => {
 				let unregisterFunctions = []
+
+				function registerEventListener(selector, event, eventHandler) {
+					let $element = $(selector);
+					let elementIsPresent = $element.length;
+
+					if (elementIsPresent) {
+						// Use direct event handler if element is present
+						$element.on(event, eventHandler);
+						unregisterFunctions.push(() => $element.off(event, eventHandler));
+					} else {
+						// Use delegate event handler if element is not yet present
+						$(document).on(event, selector, eventHandler);
+						unregisterFunctions.push(() => $element.off(event, selector, eventHandler));
+					}
+				}
 
 				const unregisterEventListeners = () => {
 					unregisterFunctions.forEach(f => f())
 				}
 
 				const checkForConditionsAndHandle = (e, specificConditions) => {
-					console.log("in onEvent")
-
-					let specificConditionsAreTrue = !specificConditions || specificConditions.every(isTrue => isTrue(guiStateModel));
-					let genericConditionsAreTrue = !notification.conditions || notification.conditions.every(isTrue => isTrue(guiStateModel));
+					let specificConditionsAreTrue = !specificConditions || specificConditions.every(cond => evaluateCondition(cond));
+					let genericConditionsAreTrue = !notification.conditions || notification.conditions.every(cond => evaluateCondition(cond));
 
 					if (genericConditionsAreTrue && specificConditionsAreTrue) {
 						notification.handle(e)
@@ -88,7 +130,12 @@ define(
 					}
 				}
 
-				notification.triggers.forEach(({conditions: specificConditions, event, htmlId, htmlSelector}) => {
+				notification.triggers.forEach((trigger) => {
+					const event = trigger.event;
+					const htmlId = trigger.htmlId;
+					const htmlSelector = trigger.htmlSelector;
+					const addClass = trigger.addClass;
+					const removeClass = trigger.removeClass;
 
 					/**
 					 * Rewriting the .live() method in terms of its successors is straightforward; these are templates for equivalent calls for all three event attachment methods:
@@ -97,23 +144,24 @@ define(
 					 * https://api.jquery.com/live/
 					 */
 
-					let eventHandler = e => checkForConditionsAndHandle(e, specificConditions);
+					let eventHandler = e => checkForConditionsAndHandle(e, trigger.conditions);
 
 					let selector = htmlId ? `#${htmlId}` : htmlSelector;
+
 					if (selector && event) {
-						let $element = $(selector);
-						let elementIsPresent = $element.length;
-
-						if (elementIsPresent) {
-							// Use direct event handler if element is present
-							$element.on(event, eventHandler);
-							unregisterFunctions.push(() => $element.off(event, eventHandler));
-						} else {
-							// Use delegate event handler if element is not yet present
-							$(document).on(event, selector, eventHandler);
-							unregisterFunctions.push(() => $element.off(event, selector, eventHandler));
-						}
-
+						registerEventListener(selector, event, eventHandler);
+					} else if (selector && addClass) {
+						registerEventListener(selector, "classChange", (e) => {
+							if ($(selector).hasClass(addClass)) {
+								eventHandler(e);
+							}
+						})
+					} else if (selector && removeClass) {
+						registerEventListener(selector, "classChange", (e) => {
+							if (!$(selector).hasClass(removeClass)) {
+								eventHandler(e);
+							}
+						})
 					}
 
 				})
