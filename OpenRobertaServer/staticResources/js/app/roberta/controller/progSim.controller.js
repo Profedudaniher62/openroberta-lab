@@ -1,5 +1,5 @@
-define([ 'exports', 'message', 'log', 'util', 'simulation.simulation','simulation.constants', 'guiState.controller', 'tour.controller', 'program.controller', 'program.model','notification.controller',
-        'blockly', 'jquery', 'jquery-validate' ], function(exports, MSG, LOG, UTIL, SIM,CONST, GUISTATE_C, TOUR_C, PROG_C, PROGRAM,NOTIFICATION_C, Blockly, $) {
+define([ 'exports', 'message', 'log', 'util', 'simulation.simulation','simulation.constants', 'guiState.controller', 'tour.controller', 'program.controller', 'program.model',
+        'blockly', 'jquery', 'jquery-validate' ], function(exports, MSG, LOG, UTIL, SIM,CONST, GUISTATE_C, TOUR_C, PROG_C, PROGRAM, Blockly, $) {
 
     const INITIAL_WIDTH = 0.5;
     var blocklyWorkspace;
@@ -173,10 +173,7 @@ define([ 'exports', 'message', 'log', 'util', 'simulation.simulation','simulatio
     }
 
     function toggleSim() {
-        let simulationIsFinished = $('#simButton').hasClass('rightActive');
-        if (simulationIsFinished) {
-            NOTIFICATION_C.hideForSimulation();
-
+        if ($('#simButton').hasClass('rightActive')) {
             SIM.cancel();
             $(".sim").addClass('hide');
             $("#simButtonsCollapse").collapse('hide');
@@ -200,8 +197,6 @@ define([ 'exports', 'message', 'log', 'util', 'simulation.simulation','simulatio
 
             PROGRAM.runInSim(GUISTATE_C.getProgramName(), configName, xmlTextProgram, xmlConfigText, language, function (result) {
                 if (result.rc == "ok") {
-                    NOTIFICATION_C.showForSimulation({PROGRAM,SIM})
-
                     SIM.init([result], true, GUISTATE_C.getRobotGroup())
                     //                    runNewInterpreter(result);
                     $(".sim").removeClass('hide');
